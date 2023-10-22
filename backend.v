@@ -105,26 +105,17 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                 // No more actions required, hold values
             end
         endcase
-    end
-end
 
-// Logic for o_gainA1 and o_gainA2 based on shifted data
-always @(posedge i_clk or negedge i_resetbAll) begin
-    if (!i_resetbAll) begin
-        o_gainA1 <= 3'b000;
-        o_gainA2 <= 2'b00;
-    end else if (data_received) begin
-        o_gainA1 <= shift_register[2:0];
-        o_gainA2 <= shift_register[4:3];
-    end
-end
+        // Logic for o_gainA1 and o_gainA2 based on shifted data
+        if (data_received) begin
+            o_gainA1 <= shift_register[2:0];
+            o_gainA2 <= shift_register[4:3];
+        end
 
-// Logic for o_vco1_fast
-always @(posedge i_clk or negedge i_resetbAll) begin
-    if (!i_resetbAll) begin
-        o_vco1_fast <= 1'b0;
-    end else if (startup_state == 7) begin
-        o_vco1_fast <= vco1_faster;
+        // Logic for o_vco1_fast
+        if (startup_state == 7) begin
+            o_vco1_fast <= vco1_faster;
+        end
     end
 end
 
