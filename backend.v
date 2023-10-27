@@ -21,6 +21,7 @@ reg vco1_faster;
 reg [4:0] startup_state;
 reg [4:0] shift_register;
 reg data_received;
+reg prev_isclk;
 
 always @(posedge i_clk or negedge i_resetbAll) begin
     if (!i_resetbAll) begin
@@ -38,24 +39,29 @@ always @(posedge i_clk or negedge i_resetbAll) begin
         o_resetbvco1 <= 1'b0;
         o_resetbvco2 <= 1'b0;
         o_ready <= 1'b0;
+        prev_isclk <= 1'b1;
     end else begin
         // State machine for the startup sequence
         case(startup_state)
             0: begin
-                // Wait for i_sdin data
-                if (i_sclk) begin
-                    shift_register <= {shift_register[3:0], i_sdin};
-                    data_received <= 1;
-                end
-                if (data_received) begin
+                if (counter1 < 5) begin
+                    if(i_sclk&&!prev_isclk)begin
+                        shift_register[4-counter1] <=i_sdin;
+                        counter1 <= counter1 +1;
+                    end
+                end else begin
+                    counter1 <= 0;
                     startup_state <= 1;
                 end
+                prev_isclk <= i_sclk;
             end
             1: begin
                 // Wait for five clock cycles
-                if (counter1 < 5) begin
+                if (counter1 < 4) begin
                     counter1 <= counter1 + 1;
                 end else begin
+                    counter1 <= 0;
+                    data_received <= 1;
                     startup_state <= 2;
                 end
             end
@@ -70,6 +76,7 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                 if (counter2 < 20) begin
                     counter2 <= counter2 + 1;
                 end else begin
+                    counter2 <= 0;
                     startup_state <= 4;
                 end
             end
@@ -85,6 +92,7 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                     counter1 <= counter1 + 1;
                 end else begin
                     startup_state <= 6;
+                    counter1 <= 0;
                 end
             end
             6: begin
