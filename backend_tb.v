@@ -64,26 +64,8 @@ begin
 	main_clk <= 0;
 	vco1_clockmodel <= 0;
 	vco2_clockmodel <= 0;
-
 	#4 resetbFPGA <= 1;
-	
-	// Define the number of simulation cycles
-    // integer num_cycles = 1000; // Adjust as needed
-
-    // for (integer sim_time = 0; sim_time < 1000; sim_time = sim_time + 1) begin
-    //     // Periodically print the values of gainA1 and gainA2
-    //     begin
-    //         $display("sim_time = %d, gainA1 = %b, gainA2 = %b, sdin = %b", sim_time, gainA1, gainA2, sdin);
-    //     end
-
-    //     // Add other conditions to set stop_simulation if needed
-    //     // For example: if (resetbAll == 0) stop_simulation = 1;
-
-    //     // Delay for 1 time unit
-    //     #1;
-    // end
 	#1500;
-    // Terminate the simulation
     $finish;
 	
 end
@@ -92,7 +74,7 @@ end
 always #2.5 main_clk <= ~main_clk;
 
 //Generation of internal clock models for the VCOs
-always #1 vco1_clockmodel <= ~vco1_clockmodel;
+always #2.5 vco1_clockmodel <= ~vco1_clockmodel;
 always #2 vco2_clockmodel <= ~vco2_clockmodel;
 
 

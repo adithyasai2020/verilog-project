@@ -20,7 +20,6 @@ reg [7:0] vco1_counter;
 reg [7:0] vco2_counter;
 reg [4:0] startup_state;
 reg [4:0] shift_register;
-reg data_received;
 reg prev_isclk;
 
 always @(posedge i_clk or negedge i_resetbAll) begin
@@ -31,7 +30,6 @@ always @(posedge i_clk or negedge i_resetbAll) begin
         vco2_counter <=0;
         startup_state <= 0;
         shift_register <= 0;
-        data_received <= 0;
         o_resetb1 <= 1'b0;
         o_resetb2 <= 1'b0;
         o_gainA1 <= 3'b000;
@@ -98,10 +96,16 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                 end
             end
             6: begin
-
+                //Compare both the clocks and pull up o_vco1_fast if first vco is faster than second vco
+                
                 if (vco1_counter >= vco2_counter)begin
                     o_vco1_fast <= 1'b1;
+                end else begin
+                    
+                    o_vco1_fast <= 0;                    
+
                 end
+                
                 
                 // Set o_ready
                 o_ready <= 1'b1;
@@ -118,7 +122,7 @@ always @(posedge i_clk or negedge i_resetbAll) begin
 end
 
 always @(posedge i_clk_vco1)begin
-    if (startup_state < 6)begin
+    if (startup_state < 7)begin
         vco1_counter <= vco1_counter + 1;
     end
     else begin
@@ -127,7 +131,7 @@ always @(posedge i_clk_vco1)begin
 end
 
 always @(posedge i_clk_vco2)begin
-    if (startup_state < 6)begin
+    if (startup_state < 7)begin
         vco2_counter <= vco2_counter + 1;
     end
     else begin
