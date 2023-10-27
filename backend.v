@@ -120,7 +120,7 @@ always @(posedge i_clk or negedge i_resetbAll) begin
         
     end
 end
-
+//counts positive edges of vco1 clock only till we update o_vco1_fast
 always @(posedge i_clk_vco1)begin
     if (startup_state < 7)begin
         vco1_counter <= vco1_counter + 1;
@@ -130,6 +130,7 @@ always @(posedge i_clk_vco1)begin
     end
 end
 
+//counts positive edges of vco2 clock only till we update o_vco1_fast
 always @(posedge i_clk_vco2)begin
     if (startup_state < 7)begin
         vco2_counter <= vco2_counter + 1;
