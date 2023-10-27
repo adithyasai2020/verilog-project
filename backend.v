@@ -16,8 +16,8 @@ module backend(
 );
 
 reg [4:0] counter1;
-reg [4:0] counter2;
-reg vco1_faster;
+reg [7:0] vco1_counter;
+reg [7:0] vco2_counter;
 reg [4:0] startup_state;
 reg [4:0] shift_register;
 reg data_received;
@@ -27,8 +27,8 @@ always @(posedge i_clk or negedge i_resetbAll) begin
     if (!i_resetbAll) begin
         // Reset the entire backend
         counter1 <= 0;
-        counter2 <= 0;
-        vco1_faster <= 0;
+        vco1_counter <= 0;
+        vco2_counter <=0;
         startup_state <= 0;
         shift_register <= 0;
         data_received <= 0;
@@ -39,6 +39,7 @@ always @(posedge i_clk or negedge i_resetbAll) begin
         o_resetbvco1 <= 1'b0;
         o_resetbvco2 <= 1'b0;
         o_ready <= 1'b0;
+        o_vco1_fast <= 1'b1;
         prev_isclk <= 1'b1;
     end else begin
         // State machine for the startup sequence
@@ -51,6 +52,8 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                     end
                 end else begin
                     counter1 <= 0;
+                    o_gainA2 <= shift_register[1:0];
+                    o_gainA1 <= shift_register[4:2];
                     startup_state <= 1;
                 end
                 prev_isclk <= i_sclk;
@@ -61,7 +64,6 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                     counter1 <= counter1 + 1;
                 end else begin
                     counter1 <= 0;
-                    data_received <= 1;
                     startup_state <= 2;
                 end
             end
@@ -73,10 +75,10 @@ always @(posedge i_clk or negedge i_resetbAll) begin
             end
             3: begin
                 // Wait for 20 clock cycles
-                if (counter2 < 20) begin
-                    counter2 <= counter2 + 1;
+                if (counter1 < 20) begin
+                    counter1 <= counter1 + 1;
                 end else begin
-                    counter2 <= 0;
+                    counter1 <= 0;
                     startup_state <= 4;
                 end
             end
@@ -96,34 +98,40 @@ always @(posedge i_clk or negedge i_resetbAll) begin
                 end
             end
             6: begin
-                // Determine the faster VCO
-                if (counter1 <= counter2 + 5 && counter1 >= counter2 - 5) begin
-                    vco1_faster <= 1;
-                end else begin
-                    vco1_faster <= 0;
+
+                if (vco1_counter >= vco2_counter)begin
+                    o_vco1_fast <= 1'b1;
                 end
-                startup_state <= 7;
-            end
-            7: begin
+                
                 // Set o_ready
                 o_ready <= 1'b1;
-                startup_state <= 8;
+                startup_state <= 7;
+                
             end
             default: begin
                 // No more actions required, hold values
             end
         endcase
 
-        // Logic for o_gainA1 and o_gainA2 based on shifted data
-        if (data_received) begin
-            o_gainA1 <= shift_register[2:0];
-            o_gainA2 <= shift_register[4:3];
-        end
+        
+    end
+end
 
-        // Logic for o_vco1_fast
-        if (startup_state == 7) begin
-            o_vco1_fast <= vco1_faster;
-        end
+always @(posedge i_clk_vco1)begin
+    if (startup_state < 6)begin
+        vco1_counter <= vco1_counter + 1;
+    end
+    else begin
+        vco1_counter <= 0;
+    end
+end
+
+always @(posedge i_clk_vco2)begin
+    if (startup_state < 6)begin
+        vco2_counter <= vco2_counter + 1;
+    end
+    else begin
+        vco2_counter <= 0;
     end
 end
 
